@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!--
+  Author: Erkan Basar - erkan.basar@ru.nl
+  Description: This simple web page is designed to display a table of contents
+    where each cell can be clicked to copy its content to the clipboard of your
+    operating system. The content of the cells can be updated dynamically via
+    input fields that are shown on the left side of the page.
+  Version: 0.1
+-->
+
+<title>Click-to-copy Content Table for Wizard-of-Oz studies</title>
+
+<style>
+
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    display: flex;
+  }
+
+  #sidebar {
+    width: 200px;
+    height: 100vh;
+    position: fixed;
+    background-color: #f1f1f1;
+    overflow-y: scroll;
+    padding: 20px;
+  }
+
+  #sidebar label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
+
+  #sidebar input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+  }
+
+  #table-container {
+    flex-grow: 1;
+    overflow: auto;
+    padding: 20px;
+    margin-left: 250px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #dddddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  td {
+    cursor: pointer;
+  }
+
+  td.clicked {
+    background-color: lightgreen;
+  }
+
+</style>
+
+</head>
+<body>
+
+  <!-- INPUTS FORMS -->
+
+  <!--
+  How to add a new input field:
+    1. Copy a label-input pair below.
+    2. Paste it just below or above the other label-input pairs.
+       The order of the tags here matches to the order shown
+       on the webpage.
+    3. You have to change the value of the "id" in the input tag.
+    4. The new "id" value has to have the same value with the tag id
+       you are using in the table. For example, the new tag is called
+       "{{ sense-number }}", then the "id" of the input should also say
+       "sense-number". This is case-sensitive.
+    5. Finally give the same value to the "for" of the label.
+    6. Update the text within the label (e.g. "Name:"), for your convenience.
+  -->
+
+  <div id="sidebar">
+
+    <label for="name">Name: </label>
+    <input type="text" id="name">
+
+    <label for="age">Age: </label>
+    <input type="text" id="age">
+
+  </div>
+
+  <!-- TABLE -->
+
+  <!--
+  How to add a new table cell:
+    1. Copy a table cell that starts with <tr> and ends with </tr>,
+       including the <tr> and </tr>.
+    2. Paste it to just below or above any other <tr> tags.
+       Never paste them below </table> or above <table ...>.
+       The order of the content here matches to the order shown
+       on the webpage.
+    3. Notice that within some <tr> tags, there is <th> and some has <td>.
+    4. If you want to have a heading within your table, use a <th> tag,
+       and write your title between a <th> and </th>.
+       These are only for headings and are NOT click-to-copy.
+    5. For the content that you would like to be able to copy by clicking,
+       use the <td> tags, and write your content between a <td> and </td>.
+
+  How to add dynamic content:
+    You can add a variable within your content by using the following
+    format with curly brackets: "{{ xyz }}". Here the entire tag
+    will be replaced with a corresponding value that you assign via the
+    input fields (explained above).
+
+    There are a few rules to use this format:
+      1. Give a self-explanatory but short id (e.g. "xyz") to your tag,
+         and write it between the curly brackets.
+      2. Never use empty space in your tag id. If you need to used
+         a two word identification, use a hyphen (e,g, " {{ xyz-abc }}").
+      3. Always leave a single space between the tag id and the brackets.
+         DO NOT write {{xyz}}, but always write "{{ xyz }}".
+
+  Glossary reminder:
+    <tr> = stands for Table Row
+    <td> = stands for Table Data
+    <th> = stands for Table Heading
+  -->
+
+  <div id="table-container">
+    <table id="content-table">
+      <tr>
+        <th>Introduction</th>
+      </tr>
+      <tr>
+        <td>Hello, {{ name }}. How are you today?</td>
+      </tr>
+      <tr>
+        <td>Nice to meet you!</td>
+      </tr>
+      <tr>
+        <th>Age question</th>
+      </tr>
+      <tr>
+        <td>How old are you?</td>
+      </tr>
+      <tr>
+        <td>{{ age }} is a good age, {{ name }}!</td>
+      </tr>
+      <tr>
+        <th>Easter egg</th>
+      </tr>
+      <tr>
+        <td>I'm sorry Dave, I am afraid I can't do that.</td>
+      </tr>
+    </table>
+  </div>
+
+<script>
+
+  /////////////// CONSTANT DEFINITIONS ///////////////
+
+  // This Map object is used to store the original contents of the table cells.
+  // This allows us to update the content of the table cells multiple times.
+  const originalContentMap = new Map();
+
+  // Get the table element. Currently the script only works for a single
+  // table with the specific id "content-table".
+  const table = document.getElementById("content-table");
+
+  // Get all the table cells with "td" tag within the table.
+  const tdElements = table.querySelectorAll("td");
+
+  // Get all input elements on the webpage.
+  const inputElements = document.querySelectorAll("input");
+
+  /////////////// TABLE CELL COPY FUNCTION HADNLING ///////////////
+
+  const copyTableCell = (cell) => {
+    if (cell) {
+      // Get the content of the cell to be copied.
+      const cellContent = cell.innerText || cell.textContent;
+
+      // Copy the content of the cell to the clipboard.
+      navigator.clipboard.writeText(cellContent)
+      .then(() => {
+        console.log("Copied:", cellContent);
+      })
+      .catch((err) => {
+        console.error("Unable to copy cell content to clipboard", err);
+      });
+    }
+  };
+
+  // The function to be executed when a table element is clicked.
+  const handleTableCellClick = (event) => {
+    const target = event.target;
+
+    // Check if the clicked element is a table cell (td).
+    if (target.tagName === "TD") {
+      // Call the copyTableCell function with the clicked cell.
+      copyTableCell(target);
+      target.classList.toggle('clicked');
+    }
+  };
+
+  // Attache the event listener to the table element.
+  table.addEventListener("click", handleTableCellClick);
+
+  /////////////// TABLE CONTENT UPDATE HANDLING ///////////////
+
+  const updateTableSlots = (event) => {
+
+    // Loop over each table cell to update their content.
+    tdElements.forEach((tdElem) => {
+
+      if (tdElem) {
+        // Store the original content to memory, if not already stored.
+        if (!originalContentMap.has(tdElem)) {
+          originalContentMap.set(tdElem, tdElem.textContent);
+        }
+
+        // Get the corresponding original content from the memory.
+        let tdContent = originalContentMap.get(tdElem);
+
+        // Loop over each input element to update the cell's content.
+        inputElements.forEach((input) => {
+          const inputId = input.id;
+          const updatedValue = input.value;
+
+          // If an updated value is empty, skip it.
+          if (updatedValue === '') return;
+          // If the table element does not contain the tag, skip it.
+          if (!tdContent.includes(`{{ ${inputId} }}`)) return;
+
+          // Replace the tags in the content via the input id and updated value.
+          tdContent = tdContent.replace(`{{ ${inputId} }}`, updatedValue);
+        });
+
+        // Assign the updated value back to the table cell.
+        tdElem.textContent = tdContent;
+      }
+    });
+  }
+
+  // Attach the event listener to each input element.
+  inputElements.forEach((input) => {
+    input.addEventListener("blur", updateTableSlots);
+  });
+
+</script>
+
+</body>
+</html>
